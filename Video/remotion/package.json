@@ -1,0 +1,25 @@
+{
+  "name": "msrg-video-remotion",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "render": "remotion render src/index.ts SlidePdfEdit ../slide-edit.mp4",
+    "render:blueprint": "remotion render src/index.ts BlueprintPromo ../slide-blueprint.mp4",
+    "render:natural": "remotion render src/index.ts NaturalPromo20s ../slide-natural.mp4",
+    "extract:slides": "bash scripts/extract-slides.sh"
+  },
+  "dependencies": {
+    "katex": "^0.16.28",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.6.3"
+  }
+}
