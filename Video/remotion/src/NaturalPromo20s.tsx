@@ -31,6 +31,36 @@ const sparks = [
   {x: 92, y: 24, size: 15, speed: 0.052, alpha: 0.34}
 ];
 
+const geometryGlyphs = [
+  {x: 19, y: 34, size: 146, rot: 14, speed: 0.018, alpha: 0.22},
+  {x: 83, y: 31, size: 132, rot: -10, speed: 0.015, alpha: 0.2},
+  {x: 25, y: 71, size: 154, rot: -7, speed: 0.014, alpha: 0.18},
+  {x: 77, y: 72, size: 140, rot: 12, speed: 0.017, alpha: 0.19}
+];
+
+const constellationNodes = [
+  {x: 190, y: 132, amp: 20, drift: 0.013},
+  {x: 418, y: 248, amp: 14, drift: 0.016},
+  {x: 612, y: 165, amp: 16, drift: 0.012},
+  {x: 1414, y: 152, amp: 18, drift: 0.014},
+  {x: 1656, y: 272, amp: 12, drift: 0.017},
+  {x: 312, y: 856, amp: 22, drift: 0.011},
+  {x: 540, y: 760, amp: 17, drift: 0.015},
+  {x: 1472, y: 826, amp: 19, drift: 0.012},
+  {x: 1708, y: 678, amp: 15, drift: 0.016}
+];
+
+const constellationLinks: Array<[number, number]> = [
+  [0, 1],
+  [1, 2],
+  [3, 4],
+  [5, 6],
+  [7, 8],
+  [2, 3],
+  [1, 6],
+  [4, 8]
+];
+
 type MathFragment = {
   x: number;
   y: number;
@@ -53,46 +83,47 @@ const mathFragmentDefs = [
     speed: 0.016
   },
   {
-    x: 74,
-    y: 12,
-    latex: '\\sum_{k=1}^{n} k = \\frac{n(n+1)}{2}',
-    size: 30,
-    alpha: 0.14,
-    rot: 9,
+    x: 68,
+    y: 13,
+    latex: '\\int_{-\\infty}^{\\infty} e^{-x^2}\\,dx=\\sqrt{\\pi}',
+    size: 29,
+    alpha: 0.15,
+    rot: 8,
     speed: 0.013
   },
   {
-    x: 12,
+    x: 18,
     y: 84,
-    latex: '\\int_{0}^{1} x^2\\,dx = \\frac{1}{3}',
-    size: 32,
+    latex:
+      '\\left|\\begin{matrix}1&1&1&1\\\\x_1&x_2&x_3&x_4\\\\x_1^2&x_2^2&x_3^2&x_4^2\\\\x_1^3&x_2^3&x_3^3&x_4^3\\end{matrix}\\right|=\\prod_{1\\le i<j\\le4}(x_j-x_i)',
+    size: 20,
     alpha: 0.15,
     rot: -7,
     speed: 0.018
   },
   {
-    x: 80,
+    x: 82,
     y: 82,
-    latex: '\\lim_{x\\to 0} \\frac{\\sin x}{x} = 1',
-    size: 30,
+    latex: 'f(a)=\\frac{1}{2\\pi i}\\oint_{|z-a|=r}\\frac{f(z)}{z-a}\\,dz',
+    size: 24,
     alpha: 0.14,
     rot: 8,
     speed: 0.015
   },
   {
     x: 48,
-    y: 10,
-    latex: 'a^2 + b^2 = c^2',
-    size: 30,
+    y: 11,
+    latex: '\\widehat{f}(\\xi)=\\int_{-\\infty}^{\\infty}f(x)e^{-2\\pi i x\\xi}\\,dx',
+    size: 24,
     alpha: 0.13,
     rot: -3,
     speed: 0.014
   },
   {
-    x: 48,
-    y: 88,
-    latex: '\\det(A - \\lambda I)=0',
-    size: 30,
+    x: 50,
+    y: 89,
+    latex: 'A=Q\\Lambda Q^{\\mathsf T}\\quad(A=A^{\\mathsf T})',
+    size: 27,
     alpha: 0.13,
     rot: 3,
     speed: 0.014
@@ -189,6 +220,23 @@ export const NaturalPromo20s = () => {
   const haloRotation = frame * 0.26;
   const haloOpacity = 0.16 + Math.sin(frame * 0.012) * 0.04;
   const mathBoardTilt = Math.sin(frame * 0.0035) * 1.4;
+  const latticeShiftX = (frame * 0.42) % 64;
+  const latticeShiftY = (frame * 0.26) % 64;
+  const scanlineTravel = (frame * 1.8) % 240;
+  const scanlineOpacity = 0.1 + Math.sin(frame * 0.03) * 0.03;
+  const dashOffsetA = (frame * 2.2) % 340;
+  const dashOffsetB = (frame * 1.4) % 200;
+  const orbitBreath = 1 + Math.sin(frame * 0.018) * 0.06;
+  const wireBend = Math.sin(frame * 0.009) * 20;
+  const prismSweepA = -46 + ((frame % Math.floor(fps * 5.6)) / (fps * 5.6)) * 198;
+  const prismSweepB = 168 - ((frame % Math.floor(fps * 7.2)) / (fps * 7.2)) * 208;
+  const auroraPulse = 0.26 + Math.sin(frame * 0.014) * 0.05;
+  const ringSpinA = frame * 0.16;
+  const ringSpinB = -frame * 0.21;
+  const constellationPoints = constellationNodes.map((node, idx) => ({
+    x: node.x + Math.sin(frame * node.drift + idx * 0.8) * node.amp,
+    y: node.y + Math.cos(frame * node.drift * 1.3 + idx * 0.6) * node.amp * 0.7
+  }));
 
   return (
     <AbsoluteFill
@@ -221,10 +269,37 @@ export const NaturalPromo20s = () => {
 
       <AbsoluteFill
         style={{
+          background: `linear-gradient(118deg, rgba(109,224,255,0) ${prismSweepA - 24}%, rgba(109,224,255,0.11) ${prismSweepA}%, rgba(109,224,255,0.3) ${prismSweepA + 12}%, rgba(109,224,255,0.08) ${prismSweepA + 34}%, rgba(109,224,255,0) ${prismSweepA + 52}%)`,
+          opacity: 0.56,
+          mixBlendMode: 'screen'
+        }}
+      />
+
+      <AbsoluteFill
+        style={{
+          background: `linear-gradient(68deg, rgba(255,168,212,0) ${prismSweepB - 20}%, rgba(255,168,212,0.08) ${prismSweepB}%, rgba(255,168,212,0.2) ${prismSweepB + 10}%, rgba(255,168,212,0.06) ${prismSweepB + 28}%, rgba(255,168,212,0) ${prismSweepB + 44}%)`,
+          opacity: 0.42,
+          mixBlendMode: 'screen'
+        }}
+      />
+
+      <AbsoluteFill
+        style={{
           backgroundImage:
             'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
           backgroundSize: '64px 64px',
+          backgroundPosition: `${latticeShiftX}px ${latticeShiftY}px`,
           opacity: 0.2
+        }}
+      />
+
+      <AbsoluteFill
+        style={{
+          backgroundImage:
+            'repeating-linear-gradient(180deg, rgba(139,214,255,0.16) 0px, rgba(139,214,255,0.02) 2px, rgba(0,0,0,0) 5px, rgba(0,0,0,0) 14px)',
+          backgroundPosition: `0 ${scanlineTravel}px`,
+          opacity: scanlineOpacity,
+          mixBlendMode: 'screen'
         }}
       />
 
@@ -248,7 +323,7 @@ export const NaturalPromo20s = () => {
       <AbsoluteFill
         style={{
           transform: `scale(1.03) rotate(${mathBoardTilt}deg)`,
-          opacity: 0.34,
+          opacity: 0.4,
           mixBlendMode: 'screen'
         }}
       >
@@ -259,33 +334,136 @@ export const NaturalPromo20s = () => {
               <stop offset="45%" stopColor="rgba(173,232,255,0.28)" />
               <stop offset="100%" stopColor="rgba(151,225,255,0.05)" />
             </linearGradient>
+            <radialGradient id="node-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(166,234,255,0.9)" />
+              <stop offset="60%" stopColor="rgba(166,234,255,0.26)" />
+              <stop offset="100%" stopColor="rgba(166,234,255,0)" />
+            </radialGradient>
           </defs>
           <path
-            d="M60 780 C 320 640, 560 900, 880 740 S 1460 640, 1860 770"
+            d={`M60 ${780 + wireBend * 0.8} C 320 ${640 + wireBend * 0.6}, 560 ${900 - wireBend * 0.8}, 880 ${
+              740 + wireBend * 0.5
+            } S 1460 ${640 - wireBend * 0.6}, 1860 ${770 + wireBend * 0.4}`}
             fill="none"
             stroke="url(#math-line)"
             strokeWidth="2.5"
             strokeDasharray="7 10"
+            strokeDashoffset={-dashOffsetA}
           />
           <path
-            d="M120 260 Q 300 220, 470 300 T 820 280"
+            d={`M120 ${260 - wireBend * 0.3} Q 300 ${220 + wireBend * 0.4}, 470 ${300 - wireBend * 0.2} T 820 ${
+              280 + wireBend * 0.3
+            }`}
             fill="none"
             stroke="url(#math-line)"
             strokeWidth="2"
             strokeDasharray="5 8"
+            strokeDashoffset={dashOffsetB}
           />
-          <circle cx="1480" cy="300" r="128" fill="none" stroke="rgba(164,229,255,0.22)" strokeWidth="2" />
-          <circle cx="1480" cy="300" r="58" fill="none" stroke="rgba(164,229,255,0.16)" strokeWidth="1.5" />
+          <circle
+            cx="1480"
+            cy="300"
+            r={128 * orbitBreath}
+            fill="none"
+            stroke="rgba(164,229,255,0.22)"
+            strokeWidth="2"
+          />
+          <circle
+            cx="1480"
+            cy="300"
+            r={58 * orbitBreath}
+            fill="none"
+            stroke="rgba(164,229,255,0.16)"
+            strokeWidth="1.5"
+          />
+          <circle cx="1480" cy="300" r="22" fill="url(#node-glow)" />
           <polygon
-            points="286,338 444,580 168,592"
+            points={`286,338 444,${580 + wireBend * 0.5} 168,${592 - wireBend * 0.3}`}
             fill="none"
             stroke="rgba(164,229,255,0.2)"
             strokeWidth="2"
             strokeDasharray="6 8"
+            strokeDashoffset={dashOffsetA * 0.6}
           />
-          <line x1="286" y1="338" x2="168" y2="592" stroke="rgba(164,229,255,0.18)" strokeWidth="1.8" />
-          <line x1="444" y1="580" x2="168" y2="592" stroke="rgba(164,229,255,0.18)" strokeWidth="1.8" />
-          <line x1="286" y1="338" x2="444" y2="580" stroke="rgba(164,229,255,0.18)" strokeWidth="1.8" />
+          <line
+            x1="286"
+            y1="338"
+            x2="168"
+            y2={592 - wireBend * 0.3}
+            stroke="rgba(164,229,255,0.18)"
+            strokeWidth="1.8"
+          />
+          <line
+            x1="444"
+            y1={580 + wireBend * 0.5}
+            x2="168"
+            y2={592 - wireBend * 0.3}
+            stroke="rgba(164,229,255,0.18)"
+            strokeWidth="1.8"
+          />
+          <line
+            x1="286"
+            y1="338"
+            x2="444"
+            y2={580 + wireBend * 0.5}
+            stroke="rgba(164,229,255,0.18)"
+            strokeWidth="1.8"
+          />
+          <g transform={`translate(960 540) rotate(${ringSpinA})`}>
+            <polygon
+              points="0,-190 165,-95 165,95 0,190 -165,95 -165,-95"
+              fill="none"
+              stroke="rgba(157,230,255,0.19)"
+              strokeWidth="1.8"
+              strokeDasharray="8 10"
+              strokeDashoffset={-dashOffsetA * 0.45}
+            />
+            <polygon
+              points="0,-120 104,-60 104,60 0,120 -104,60 -104,-60"
+              fill="none"
+              stroke="rgba(157,230,255,0.14)"
+              strokeWidth="1.4"
+              strokeDasharray="6 8"
+              strokeDashoffset={dashOffsetB * 0.4}
+            />
+          </g>
+          <g transform={`translate(960 540) rotate(${ringSpinB}) scale(${1 + auroraPulse * 0.2})`}>
+            <circle cx="0" cy="0" r="280" fill="none" stroke="rgba(145,221,255,0.12)" strokeWidth="1.6" />
+            <circle
+              cx="0"
+              cy="0"
+              r="332"
+              fill="none"
+              stroke="rgba(145,221,255,0.1)"
+              strokeWidth="1.2"
+              strokeDasharray="12 15"
+              strokeDashoffset={-dashOffsetB * 0.8}
+            />
+          </g>
+          {constellationLinks.map(([from, to], idx) => (
+            <line
+              key={`link-${from}-${to}`}
+              x1={constellationPoints[from]?.x}
+              y1={constellationPoints[from]?.y}
+              x2={constellationPoints[to]?.x}
+              y2={constellationPoints[to]?.y}
+              stroke={`rgba(148,226,255,${0.11 + Math.sin(frame * 0.016 + idx) * 0.04})`}
+              strokeWidth={1.4}
+            />
+          ))}
+          {constellationPoints.map((point, idx) => (
+            <g key={`node-${idx}`}>
+              <circle cx={point.x} cy={point.y} r={3.5} fill="rgba(188,241,255,0.85)" />
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={11 + Math.sin(frame * 0.02 + idx) * 2}
+                fill="none"
+                stroke="rgba(141,225,255,0.26)"
+                strokeWidth="1.1"
+              />
+            </g>
+          ))}
         </svg>
       </AbsoluteFill>
 
@@ -293,6 +471,8 @@ export const NaturalPromo20s = () => {
         const driftX = Math.sin(frame * frag.speed + i * 0.8) * 24;
         const driftY = Math.cos(frame * frag.speed * 1.2 + i * 0.65) * 14;
         const pulse = 0.7 + Math.sin(frame * frag.speed * 2.8 + i) * 0.3;
+        const scale = 0.92 + pulse * 0.16;
+        const depth = Math.sin(frame * frag.speed * 1.8 + i * 0.5) * 3;
         return (
           <div
             key={`math-frag-${i}`}
@@ -301,17 +481,83 @@ export const NaturalPromo20s = () => {
               position: 'absolute',
               left: `calc(${frag.x}% + ${driftX}px)`,
               top: `calc(${frag.y}% + ${driftY}px)`,
-              transform: `translate(-50%, -50%) rotate(${frag.rot}deg)`,
+              transform: `translate(-50%, -50%) rotate(${frag.rot}deg) scale(${scale}) translateY(${depth}px)`,
               fontSize: frag.size,
               letterSpacing: '0.03em',
               color: `rgba(192,236,255,${frag.alpha * pulse})`,
-              textShadow: '0 0 14px rgba(137,220,255,0.3)',
+              textShadow: '0 0 18px rgba(137,220,255,0.35), 0 0 34px rgba(79,186,255,0.16)',
+              filter: 'drop-shadow(0 0 10px rgba(102,210,255,0.2))',
               whiteSpace: 'nowrap',
               pointerEvents: 'none',
               zIndex: 2
             }}
             dangerouslySetInnerHTML={{__html: frag.html}}
           >
+          </div>
+        );
+      })}
+
+      {geometryGlyphs.map((glyph, i) => {
+        const driftX = Math.sin(frame * glyph.speed + i * 0.9) * 20;
+        const driftY = Math.cos(frame * glyph.speed * 1.1 + i * 0.6) * 16;
+        const spin = glyph.rot + frame * (0.03 + i * 0.004);
+        const pulse = 0.7 + Math.sin(frame * glyph.speed * 4 + i * 1.4) * 0.3;
+        return (
+          <div
+            key={`glyph-${i}`}
+            style={{
+              position: 'absolute',
+              left: `calc(${glyph.x}% + ${driftX}px)`,
+              top: `calc(${glyph.y}% + ${driftY}px)`,
+              width: glyph.size,
+              height: glyph.size,
+              transform: `translate(-50%, -50%) rotate(${spin}deg)`,
+              opacity: glyph.alpha * (0.75 + pulse * 0.5),
+              pointerEvents: 'none',
+              zIndex: 1
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: 20,
+                border: '1.6px solid rgba(158,230,255,0.45)',
+                boxShadow: '0 0 20px rgba(100,210,255,0.2)'
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                inset: '18%',
+                borderRadius: '50%',
+                border: '1.4px dashed rgba(156,222,255,0.38)'
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: 0,
+                width: 1.4,
+                height: '100%',
+                transform: 'translateX(-50%)',
+                background:
+                  'linear-gradient(180deg, rgba(172,236,255,0), rgba(172,236,255,0.9), rgba(172,236,255,0))'
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: 0,
+                height: 1.4,
+                width: '100%',
+                transform: 'translateY(-50%)',
+                background:
+                  'linear-gradient(90deg, rgba(172,236,255,0), rgba(172,236,255,0.9), rgba(172,236,255,0))'
+              }}
+            />
           </div>
         );
       })}
@@ -557,8 +803,10 @@ export const NaturalPromo20s = () => {
           });
           const problemImageY = Math.sin(localFrame * 0.015) * 2 - 8;
           const panelSweep = -26 + ((localFrame % Math.floor(fps * 3.2)) / (fps * 3.2)) * 170;
+          const panelSweepSecondary = 164 - ((localFrame % Math.floor(fps * 4.1)) / (fps * 4.1)) * 220;
           const framePulse = 0.5 + Math.sin(localFrame * 0.05) * 0.5;
           const frameEdge = 0.38 + framePulse * 0.3;
+          const cornerPulse = 0.5 + Math.sin(localFrame * 0.08) * 0.4;
           const frameGlow = interpolate(
             localFrame,
             [0, fps * 0.8, totalFrame - fps * 0.6, totalFrame],
@@ -625,6 +873,70 @@ export const NaturalPromo20s = () => {
                     mixBlendMode: 'screen'
                   }}
                 />
+                <AbsoluteFill
+                  style={{
+                    background: `linear-gradient(72deg, rgba(255,172,222,0) ${panelSweepSecondary - 20}%, rgba(255,172,222,0.09) ${panelSweepSecondary}%, rgba(255,172,222,0.22) ${panelSweepSecondary + 10}%, rgba(255,172,222,0) ${panelSweepSecondary + 28}%)`,
+                    opacity: 0.55,
+                    mixBlendMode: 'screen'
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 18,
+                    borderRadius: 20,
+                    pointerEvents: 'none'
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      width: 74,
+                      height: 74,
+                      borderLeft: `2px solid rgba(153,229,255,${0.45 + cornerPulse * 0.25})`,
+                      borderTop: `2px solid rgba(153,229,255,${0.45 + cornerPulse * 0.25})`,
+                      borderTopLeftRadius: 14
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      width: 74,
+                      height: 74,
+                      borderRight: `2px solid rgba(153,229,255,${0.45 + cornerPulse * 0.25})`,
+                      borderTop: `2px solid rgba(153,229,255,${0.45 + cornerPulse * 0.25})`,
+                      borderTopRightRadius: 14
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      bottom: 0,
+                      width: 74,
+                      height: 74,
+                      borderLeft: `2px solid rgba(153,229,255,${0.45 + cornerPulse * 0.25})`,
+                      borderBottom: `2px solid rgba(153,229,255,${0.45 + cornerPulse * 0.25})`,
+                      borderBottomLeftRadius: 14
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      bottom: 0,
+                      width: 74,
+                      height: 74,
+                      borderRight: `2px solid rgba(153,229,255,${0.45 + cornerPulse * 0.25})`,
+                      borderBottom: `2px solid rgba(153,229,255,${0.45 + cornerPulse * 0.25})`,
+                      borderBottomRightRadius: 14
+                    }}
+                  />
+                </div>
                 <div
                   style={{
                     position: 'absolute',
@@ -742,6 +1054,8 @@ export const NaturalPromo20s = () => {
                     extrapolateRight: 'clamp'
                   });
                   const isLongFinalLine = isFinalScene && line.length >= 20;
+                  const lineSweep = -40 + (((localFrame + lineIndex * 17) % Math.floor(fps * 2.6)) / (fps * 2.6)) * 220;
+                  const linePulse = 0.58 + Math.sin(localFrame * 0.06 + lineIndex * 1.2) * 0.42;
                   return (
                     <div
                       key={line}
@@ -752,14 +1066,24 @@ export const NaturalPromo20s = () => {
                         padding: isFinalScene ? (isLongFinalLine ? '18px 34px' : '18px 46px') : '16px 36px',
                         borderRadius: isFinalScene ? 18 : 14,
                         background: 'linear-gradient(130deg, rgba(32,16,42,0.72), rgba(11,23,43,0.54))',
-                        border: '1px solid rgba(235,203,224,0.44)',
+                        border: `1px solid rgba(235,203,224,${0.34 + linePulse * 0.18})`,
                         boxShadow: '0 12px 24px rgba(0,0,0,0.28)',
                         transform: `translateY(${lineShift}px)`,
                         opacity: lineOpacity,
                         textAlign: 'center',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden'
                       }}
                     >
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          borderRadius: 'inherit',
+                          background: `linear-gradient(110deg, rgba(143,231,255,0) ${lineSweep - 32}%, rgba(143,231,255,${0.14 + linePulse * 0.16}) ${lineSweep}%, rgba(143,231,255,0) ${lineSweep + 22}%)`,
+                          mixBlendMode: 'screen'
+                        }}
+                      />
                       <div
                         style={{
                           position: 'absolute',
